@@ -2,63 +2,46 @@ from collections import UserDict
 from datetime import datetime
 from re import findall
 
+
 class Field:
     def __init__(self, value):
+        self.__value = None
         self.value = value
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
+        self.__value = value
 
     def __str__(self):
         return str(self.value)
 
 
 class Name(Field):
-    def __init__(self, name):
-        self.name = name
-
-    @property
-    def name(self):
-        pass
-
-    @name.setter
-    def name(self, name):
-        if name.__class__ is str:
-            self.value = name
-        else:
-            raise ValueError
+    pass
 
 
 class Phone(Field):
-    def __init__(self, phone):
-        self.phone = phone
-
-    @property
-    def phone(self):
-        pass
-
-    @phone.setter
-    def phone(self, phone):
+    @Field.value.setter
+    def value(self, phone):
         if (not phone.isdigit()) or len(phone) != 10:
             raise ValueError
-        self.value = phone
+        Field.value.fset(self, phone)
 
 
 class Birthday(Field):
-    def __init__(self, birthday):
-        self.birthday = birthday
-
-    @property
-    def birthday(self):
-        pass
-
-    @birthday.setter
-    def birthday(self, birthday):
-        if birthday.__class__ is str:
+    def __str__(self):
+        @Field.value.setter
+        def value(self, birthday):
             birthday = findall(r"\b(?:0?[1-9]|[12]\d|3[01])[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:19\d\d|20\d\d)\b|\b(?:19\d\d|20\d\d)[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:0?[1-9]|[12]\d|3[01])\b", birthday)
             if len(birthday) != 0:
-                self.value = birthday[0]
+                Field.value.fset(self, birthday[0])
             else:
-                self.value = None
-        else:
-            self.value = None
+                Field.value.fset(self, None)
+
 
 class Record:
     def __init__(self, name, birthday=None):
@@ -129,15 +112,15 @@ class AddressBook(UserDict):
             del self.data[value]
 
     def iterator(self, iteration=1, records=5):
-        self.paige = ""
+        for i in range(iteration):
+            self.paige = ""
 
-        if len(self.list_data) == 0:
-            self.list_data = self.data.copy()
-        iteration = len(self.list_data) if records * iteration > len(self.list_data) else records * iteration
+            if len(self.list_data) == 0:
+                self.list_data = self.data.copy()
 
-        while not (len(self.paige.split('.')) == iteration or len(self.list_data) == 0):
-            key = next(iter(self.list_data))
-            self.paige += str(self.data[key]) + '.\n'
-            self.list_data.pop(key)
+            while not (len(self.paige.split('.')) == records or len(self.list_data) == 0):
+                key = next(iter(self.list_data))
+                self.paige += str(self.data[key]) + '.\n'
+                self.list_data.pop(key)
 
-        yield self.paige
+            yield self.paige
