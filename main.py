@@ -1,6 +1,8 @@
 from collections import UserDict
 from datetime import datetime
+from msilib.schema import SelfReg
 from re import findall
+from typing import Self
 
 
 class Field:
@@ -14,7 +16,12 @@ class Field:
 
     @value.setter
     def value(self, value):
+        if not self.is_valid(value):
+            raise ValueError
         self.__value = value
+
+    def is_valid(self, value):
+        return True
 
     def __str__(self):
         return str(self.value)
@@ -27,26 +34,27 @@ class Name(Field):
 class Phone(Field):
     @Field.value.setter
     def value(self, phone):
-        if (not phone.isdigit()) or len(phone) != 10:
-            raise ValueError
         Field.value.fset(self, phone)
+
+    def is_valid(self, value):
+        return value.isdigit() and len(value) == 10
+
 
 
 class Birthday(Field):
-    def __str__(self):
-        @Field.value.setter
-        def value(self, birthday):
-            birthday = findall(r"\b(?:0?[1-9]|[12]\d|3[01])[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:19\d\d|20\d\d)\b|\b(?:19\d\d|20\d\d)[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:0?[1-9]|[12]\d|3[01])\b", birthday)
-            if len(birthday) != 0:
-                Field.value.fset(self, birthday[0])
-            else:
-                Field.value.fset(self, None)
+    @Field.value.setter
+    def value(self, birthday):
+        birthday = findall(r"\b(?:0?[1-9]|[12]\d|3[01])[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:19\d\d|20\d\d)\b|\b(?:19\d\d|20\d\d)[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:0?[1-9]|[12]\d|3[01])\b", str(birthday))
+        if len(birthday) != 0:
+            Field.value.fset(self, birthday[0])
+        else:
+            Field.value.fset(self, None)
 
 
 class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
-        self.birthday = Birthday(birthday)
+        self.birthday = None if birthday == None else Birthday(birthday)
         self.phones = []
 
     def add_phone(self, phone):
@@ -66,6 +74,7 @@ class Record:
 
     def find_phone(self, phone):
         for p in self.phones:
+
             if phone == p.value:
                 return p
 
