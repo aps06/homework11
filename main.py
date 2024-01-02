@@ -1,12 +1,12 @@
 from collections import UserDict
 from datetime import datetime
-from msilib.schema import SelfReg
 from re import findall
-from typing import Self
 
 
 class Field:
     def __init__(self, value):
+        if not self.is_valid(value):
+            raise ValueError
         self.__value = None
         self.value = value
 
@@ -16,8 +16,6 @@ class Field:
 
     @value.setter
     def value(self, value):
-        if not self.is_valid(value):
-            raise ValueError
         self.__value = value
 
     def is_valid(self, value):
@@ -32,23 +30,15 @@ class Name(Field):
 
 
 class Phone(Field):
-    @Field.value.setter
-    def value(self, phone):
-        Field.value.fset(self, phone)
-
     def is_valid(self, value):
         return value.isdigit() and len(value) == 10
 
 
 
 class Birthday(Field):
-    @Field.value.setter
-    def value(self, birthday):
-        birthday = findall(r"\b(?:0?[1-9]|[12]\d|3[01])[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:19\d\d|20\d\d)\b|\b(?:19\d\d|20\d\d)[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:0?[1-9]|[12]\d|3[01])\b", str(birthday))
-        if len(birthday) != 0:
-            Field.value.fset(self, birthday[0])
-        else:
-            Field.value.fset(self, None)
+    def is_valid(self, value):
+        return 0 != len(findall(r"\b(?:0?[1-9]|[12]\d|3[01])[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:19\d\d|20\d\d)\b|\b(?:19\d\d|20\d\d)[-/. ](?:0?[1-9]|1[0-2])[-/. ](?:0?[1-9]|[12]\d|3[01])\b", str(value)))
+        
 
 
 class Record:
@@ -89,13 +79,15 @@ class Record:
 
             if len(list_data[-1]) > 2:
                 list_data.reverse()
+                print(list_data)
 
             if int(list_data[0]) <= today.year:
 
                 if int(list_data[1]) <= today.month:
 
                     list_data[0] = str(today.year + 1) if int(list_data[2]) < today.day else today.year
-
+                else:
+                    list_data[0] = today.year
             str_date = f'{list_data[0]}{list_data[1]}{list_data[2]}'
 
             date_birthday = datetime.strptime(str_date, '%Y%m%d').date()
